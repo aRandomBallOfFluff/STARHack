@@ -10,26 +10,6 @@ void setup() {
 
 void  loop ()
 {
-    bpm = measureHeartrate()
-    if bpm != 0 {
-
-      if bpm <= 55 or bpm >= 110
-      {
-        // unhealthy bpm! panic time!
-        break 
-
-      }
-
-    }
-
-
-
-}
-
-
-void measureHeartrate () {
-
-
     float reads[samp_siz], sum;
     long int now, ptr;
     float  last, reader, start;
@@ -38,8 +18,6 @@ void measureHeartrate () {
     int rise_count;
     int n;
     long int last_beat;
-
-    print_value = 0
 
     for (int i = 0; i < samp_siz; i++)
       reads[i] = 0;
@@ -95,8 +73,6 @@ void measureHeartrate () {
           
           third = second;
           second  = first;
-
-
           
         }
       }
@@ -105,7 +81,6 @@ void measureHeartrate () {
         //  Ok, the curve is falling
         rising = false;
         rise_count = 0;
-        
       }
       before = last;
       
@@ -113,9 +88,7 @@ void measureHeartrate () {
       ptr++;
       ptr  %= samp_siz;
 
-      return print_value
-
     }
-
 }
 
+ 
