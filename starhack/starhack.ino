@@ -9,9 +9,6 @@
 // pin for right motor : 
 // pin for passive buzzer : 
 
-// FOR JACKALOPE: figure out what kind of beeper, make beeper start in redstate, stop in yellow state. 
-// also add: if main button pressed in BlueState, go into blank state
-
 /// RGB pin setup
 int redPin= 11;
 int greenPin = 10;
