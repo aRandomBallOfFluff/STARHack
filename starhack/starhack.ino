@@ -331,7 +331,7 @@ void setup() {
     pinMode(in4, OUTPUT);
 
 
-   //Defining the pins as OUTPUT
+    //Defining the pins as OUTPUT
     pinMode(redPin,  OUTPUT);              
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
@@ -341,6 +341,9 @@ void setup() {
 
     pinMode(soundSensor, INPUT);
     pinMode(buzzer, OUTPUT);
+
+    pinMode(trig, OUTPUT);
+    pinMode(echo, INPUT);
 
     state = IDLE;
 }
@@ -360,111 +363,148 @@ void loop() {
         yellowState();
         break;
     }
-  // put your main code here, to run repeatedly:
-  // While not in panic mode, monitor heart rate and make green LED light up.
-  // When abnormal heart rate: go into panic mode (light up red LED) -> Go in straight line until object is detected, beeping. (implement pathfinding to turn and go back if time)
-  // When object found: Guiding mode -> lead back to original point.
-  // Extra: Add indicator when heart rate is near abnormal threshold, enable voluntary activation -> automatic at certain threshold
+    // put your main code here, to run repeatedly:
+    // While not in panic mode, monitor heart rate and make green LED light up.
+    // When abnormal heart rate: go into panic mode (light up red LED) -> Go in straight line until object is detected, beeping. (implement pathfinding to turn and go back if time)
+    // When object found: Guiding mode -> lead back to original point.
+    // Extra: Add indicator when heart rate is near abnormal threshold, enable voluntary activation -> automatic at certain threshold
 }
 
 void blueState() {
     Serial.println("Entered Idle State");
-  // it's idling, so it just going straight until someone presses the main button
-  // when someone presses the button (main button) --> call measureHeartrateState()
+    // it's idling, so it just going straight until someone presses the main button
+    // when someone presses the button (main button) --> call measureHeartrateState()
 
     setColor(0, 0, 255); // Blue Color
 
-  // PUT MOVE FORWARD COMMAND HERE
+    // PUT MOVE FORWARD COMMAND HERE
 
-  // Read button (LOW = pressed when using INPUT_PULLUP)
+    // Read button (LOW = pressed when using INPUT_PULLUP)
 
 
-    // digitalWrite(in1, HIGH);
-    // digitalWrite(in2, LOW);
-    // digitalWrite(in3, LOW);
-    // digitalWrite(in4, HIGH);  // Example: forward direction
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);  // Example: forward direction
     state = MONITORING;
-    while (digitalRead(buttonControlPin) == HIGH){
-        // int sensorData = digitalRead(soundSensor);
-        // Serial.println(sensorData);
-        // if (sensorData > threshold){
-        //     state = EMERGENCY;
-        //     break;
-        // }
-    }
+    while (digitalRead(buttonControlPin) == HIGH){}
 
     Serial.println("Button Pressed!");
 
-    // digitalWrite(in1, LOW);
-    // digitalWrite(in2, LOW);
-    // digitalWrite(in3, LOW);
-    // digitalWrite(in4, LOW);
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, LOW);
 }
 
 
 void blankState() {
     Serial.println("Here's where the robot would detect your heart rate... If you had one.");
-  // complete!
+    // complete!
 
-  // blank (colorless)
-  // measure heart rate state
-  // this is where it would normally detect heartrate
-  // since we don't have a heartrate detector availible, we will indicate abnormal heartrate by a button push, and normal by no button push
-  // it will turn green if no push (normal), wait a moment, then go back to blue mode --> call blueState()
-  // if it receives a push within the time, it will go into red mode (abnormal heartrate detected) --> call redState()
+    // blank (colorless)
+    // measure heart rate state
+    // this is where it would normally detect heartrate
+    // since we don't have a heartrate detector availible, we will indicate abnormal heartrate by a button push, and normal by no button push
+    // it will turn green if no push (normal), wait a moment, then go back to blue mode --> call blueState()
+    // if it receives a push within the time, it will go into red mode (abnormal heartrate detected) --> call redState()
 
-  setColor(0, 0, 0); // no Color
+    setColor(0, 0, 0); // no Color
 
-  unsigned long startTime = millis();
-  bool buttonPressed = false;
+    unsigned long startTime = millis();
+    bool buttonPressed = false;
 
-  // Wait up to 5 seconds
-  while (millis() - startTime <   5000) { // its set to 5000 miliseconds (5 seconds) right now, but can be changed if needed!!
-    if (digitalRead(buttonMonitorPin) == LOW) {  // LOW = pressed (with INPUT_PULLUP)
-        Serial.println("Button press rate over 0 PPM. Carpal tunnel imminent!");
-      buttonPressed = true;
-      state = EMERGENCY;
-      break;
+    // Wait up to 5 seconds
+    while (millis() - startTime <   5000) { // its set to 5000 miliseconds (5 seconds) right now, but can be changed if needed!!
+        if (digitalRead(buttonMonitorPin) == LOW) {  // LOW = pressed (with INPUT_PULLUP)
+            Serial.println("Button press rate over 0 PPM. Carpal tunnel imminent!");
+            buttonPressed = true;
+            state = EMERGENCY;
+            break;
+        }
     }
-  }
     
 
 
-  if (buttonPressed == false) {
+    if (buttonPressed == false) {
     // Button was NOT pressed within 5 seconds
     setColor(0, 255, 0);
     delay(4000); // Pause before entering blue mode again
     state = IDLE;
-  }
+    }
 }
 
 void redState() {
     toggleBuzzer(0);
     Serial.println("Warning! Someone needs help!");
-  // emergency protocol - abnormal heart rate detected
-  // led turns red, and beeper starts beeping
-  // it starts to move, avoiding obstacles, until main button is pressed again. 
-  // when main button is pressed again --> call yellowState()
+    // emergency protocol - abnormal heart rate detected
+    // led turns red, and beeper starts beeping
+    // it starts to move, avoiding obstacles, until main button is pressed again. 
+    // when main button is pressed again --> call yellowState()
 
     setColor(255, 0, 0); // Red Color
 
     unsigned long start_time = micros();
-    // digitalWrite(in1, HIGH);
-    // digitalWrite(in2, LOW);
-    // digitalWrite(in3, LOW);
-    // digitalWrite(in4, HIGH);
-  // add buzzer sound here
-  // add movement
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    // add buzzer sound here
+    // add movement
 
-  // Read button (LOW = pressed when using INPUT_PULLUP)
+    // Read button (LOW = pressed when using INPUT_PULLUP)
     while (digitalRead(buttonControlPin) == HIGH){
+        digitalWrite(trig, LOW);
+        delayMicroseconds(2);
+        digitalWrite(trig, HIGH);
+        delayMicroseconds(10);
+        digitalWrite(trig, LOW);
+
+
+        long duration = pulseIn(echo, HIGH);
+
+        int distance = duration  * 0.034/2;
+
+        Serial.print(duration);
+        Serial.println(" us");
+        Serial.print(distance);
+        Serial.println(" cm");
+
+        // check fo walls to path find for help
+
+        if(distance < 10){
+            unsigned long instruction[] = {STRAIGHT, micros() - start_time};
+            start_time = micros();
+            digitalWrite(in1, LOW);
+            digitalWrite(in2, HIGH);
+            digitalWrite(in3, HIGH);
+            digitalWrite(in4, LOW);
+            delay(400);
+            instruction[0] = BACK;
+            instruction[1] = micros() - start_time;
+            start_time = micros();
+            queue.Append(instruction);
+            digitalWrite(in1, HIGH);
+            digitalWrite(in2, LOW);
+            digitalWrite(in3, HIGH);
+            digitalWrite(in4, LOW);
+            delay(500);
+            instruction[0] = BACK;
+            instruction[1] = micros() - start_time;
+            queue.Append(instruction);
+            digitalWrite(in1, HIGH);
+            digitalWrite(in2, LOW);
+            digitalWrite(in3, LOW);
+            digitalWrite(in4, HIGH);
+            start_time = micros();
+        }
     }
     // Button IS pressed → stop motors. Help has been found
-    // digitalWrite(in1, LOW);
-    // digitalWrite(in2, LOW);
-    // digitalWrite(in3, LOW);
-    // digitalWrite(in4, LOW);
-    unsigned long instruction[] = {LEFT, micros() - start_time};
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, LOW);
+    unsigned long instruction[] = {STRAIGHT, micros() - start_time};
     queue.Append(instruction);
 
     // STOP BUZZER SOUND
@@ -475,22 +515,27 @@ void redState() {
 
 void yellowState() {
     Serial.println("Going back to the person in distress");
-  // the robot retraces it's steps back to initial location. 
-  // When it arrives with help (another button push on main button), back to bluestate --> call blueState()
+    // the robot retraces it's steps back to initial location. 
+    // When it arrives with help (another button push on main button), back to bluestate --> call blueState()
 
 
-  setColor(255, 255, 0); // Yellow Color
-  // add movement
-  while (queue.length > 0) {
-    Serial.println(queue.Last()[0]);
-    Serial.println(queue.Last()[1]);
-    reverse(queue.Last());
-    queue.DeleteLast();
-  }
+    setColor(255, 255, 0); // Yellow Color
+    // add movement
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+    while (queue.length > 0) {
+        Serial.println(queue.Last()[0]);
+        Serial.println(queue.Last()[1]);
+        if (reverse(queue.Last())){
+            queue.DeleteLast();
+        }
+    }
 
 
-  // assume everything is done now
-  state = IDLE;
+    // assume everything is done now
+    state = IDLE;
 }
 
 void setColor(int redValue, int greenValue, int blueValue) {
@@ -499,45 +544,89 @@ void setColor(int redValue, int greenValue, int blueValue) {
     analogWrite(bluePin, blueValue);
 }
 
-void reverse(long instruction[2]) {
+bool reverse(long instruction[2]) {
+    unsigned long start_time = micros();
     Serial.println(instruction[0]);
     Serial.println(instruction[1]);
     switch (instruction[0]) {
         case STRAIGHT:
             // Code that make go forward
-            // digitalWrite(in1, HIGH);
-            // digitalWrite(in2, LOW);
-            // digitalWrite(in3, LOW);
-            // digitalWrite(in4, HIGH);
+            digitalWrite(in1, HIGH);
+            digitalWrite(in2, LOW);
+            digitalWrite(in3, LOW);
+            digitalWrite(in4, HIGH);
             Serial.println("CHARGE!");
             break;
         case LEFT:
             // Code that goes spinny towards the right
-            // digitalWrite(in1, HIGH);
-            // digitalWrite(in2, LOW);
-            // digitalWrite(in3, HIGH);
-            // digitalWrite(in4, LOW);
+            digitalWrite(in1, HIGH);
+            digitalWrite(in2, LOW);
+            digitalWrite(in3, HIGH);
+            digitalWrite(in4, LOW);
             Serial.println("Trans lefts are human lefts.");
             break;
         case RIGHT:
             // Code that goes spinny towards the left
-            // digitalWrite(in1, LOW);
-            // digitalWrite(in2, HIGH);
-            // digitalWrite(in3, LOW);
-            // digitalWrite(in4, HIGH);
+            digitalWrite(in1, LOW);
+            digitalWrite(in2, HIGH);
+            digitalWrite(in3, LOW);
+            digitalWrite(in4, HIGH);
             Serial.println("Skirt goes spinny!");
             break;
         case BACK:
             // Code thet make go backwards
-            // digitalWrite(in1, LOW);
-            // digitalWrite(in2, HIGH);
-            // digitalWrite(in3, HIGH);
-            // digitalWrite(in4, LOW);
+            digitalWrite(in1, LOW);
+            digitalWrite(in2, HIGH);
+            digitalWrite(in3, HIGH);
+            digitalWrite(in4, LOW);
             Serial.println("Rewind!");
             break;
     }
-    int ms = instruction[1]/1000;
-    delay(ms);
+    start_time = micros();
+    while(micros() - start_time < instruction[1]){
+        digitalWrite(trig, LOW);
+        delayMicroseconds(2);
+        digitalWrite(trig, HIGH);
+        delayMicroseconds(10);
+        digitalWrite(trig, LOW);
+
+
+        long duration = pulseIn(echo, HIGH);
+
+        int distance = duration  * 0.034/2;
+        if (distance < 10 and instruction[0] == STRAIGHT){
+            unsigned long remaining[] = {instruction[0], instruction[1]  - (micros() - start_time)};
+            queue.DeleteLast();
+            digitalWrite(in1, HIGH);
+            digitalWrite(in2, LOW);
+            digitalWrite(in3, HIGH);
+            digitalWrite(in4, LOW);
+            start_time = micros();
+            delay(400);
+            unsigned long detour[] = {RIGHT, micros() - start_time};
+            queue.Append(detour);
+            start_time = micros();
+            digitalWrite(in1, HIGH);
+            digitalWrite(in2, LOW);
+            digitalWrite(in3, LOW);
+            digitalWrite(in4, HIGH);
+            delay(400);
+            detour[0] = STRAIGHT;
+            detour[1] = micros() - start_time;
+            queue.Append(detour);
+            digitalWrite(in1, LOW);
+            digitalWrite(in2, HIGH);
+            digitalWrite(in3, LOW);
+            digitalWrite(in4, HIGH);
+            start_time = micros();
+            delay(400);
+            detour[0] = LEFT;
+            detour[1] = micros() - start_time;
+            queue.Append(remaining);
+            return false;
+        }
+    }
+    return true;
 }
 
 void toggleBuzzer(int response) {
