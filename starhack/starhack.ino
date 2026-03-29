@@ -1,3 +1,4 @@
+#include <SR04.h>
 #include <SoftwareSerial.h>
 
 // pin for LED : 
@@ -12,15 +13,20 @@
 // also add: if main button pressed in BlueState, go into blank state
 
 /// RGB pin setup
-int redPin= 5;
-int greenPin = 6;
-int  bluePin = 7;
+int redPin= 11;
+int greenPin = 10;
+int  bluePin = 9;
 
-int buttonMonitorPin = 2;
-int buttonControlPin = 3;
+int buttonMonitorPin = 12;
+int buttonControlPin = 13;
 
-const int motorPin1 = 9;      // Motor control pin(s)
-const int motorPin2 = 10;     // If using H-bridge for direction
+int trig = 3;
+int echo = 2;
+
+int in1 = 4; // Right Forward
+int in2 = 5; // Right Back
+int in3 = 7; // Left Back
+int in4 = 8; // Left Forward
 
 // Manually making more readable states because enums don't work well
 const int IDLE = 0;
@@ -309,11 +315,15 @@ void LinkedList<T>::Clear()
 
 
 #endif
-LinkedList<int*> queue;
+LinkedList<long*> queue;
 
 void setup() {
+    Serial.begin(9600);
+    pinMode(in1, OUTPUT);
+    pinMode(in2, OUTPUT);
+    pinMode(in3, OUTPUT);
+    pinMode(in4, OUTPUT);
 
-  // LinkedList<int> queue;
 
    //Defining the pins as OUTPUT
     pinMode(redPin,  OUTPUT);              
@@ -322,14 +332,10 @@ void setup() {
 
     pinMode(buttonMonitorPin, INPUT_PULLUP);
     pinMode(buttonControlPin, INPUT_PULLUP);
-
-    pinMode(motorPin1, OUTPUT);
-    pinMode(motorPin2, OUTPUT);
-
+    blueState();
 }
 
 void loop() {
-    blueState();
   // put your main code here, to run repeatedly:
   // While not in panic mode, monitor heart rate and make green LED light up.
   // When abnormal heart rate: go into panic mode (light up red LED) -> Go in straight line until object is detected, beeping. (implement pathfinding to turn and go back if time)
@@ -339,6 +345,7 @@ void loop() {
 }
 
 void blueState() {
+    Serial.println("Entered Idle State");
   // it's idling, so it just going straight until someone presses the main button
   // when someone presses the button (main button) --> call measureHeartrateState()
 
@@ -347,22 +354,28 @@ void blueState() {
   // PUT MOVE FORWARD COMMAND HERE
 
   // Read button (LOW = pressed when using INPUT_PULLUP)
-    bool pressed = (digitalRead(buttonControlPin) == LOW);
 
-    if (!pressed) {
-    // Button NOT pressed → keep motors running
-        digitalWrite(motorPin1, HIGH);
-        digitalWrite(motorPin2, LOW);   // Example: forward direction
-    } else {
-    // Button IS pressed → stop motors
-        digitalWrite(motorPin1, LOW);
-        digitalWrite(motorPin2, LOW);
-        state = MONITORING;
-    }
+
+    // digitalWrite(in1, HIGH);
+    // digitalWrite(in2, LOW);
+    // digitalWrite(in3, LOW);
+    // digitalWrite(in4, HIGH);  // Example: forward direction
+
+    while (digitalRead(buttonControlPin) == HIGH){}
+
+    Serial.println("Button Pressed!");
+
+    // digitalWrite(in1, LOW);
+    // digitalWrite(in2, LOW);
+    // digitalWrite(in3, LOW);
+    // digitalWrite(in4, LOW);
+    state = MONITORING;
+    changeState();
 }
 
 
 void blankState() {
+    Serial.println("Here's where the robot would detect your heart rate... If you had one.");
   // complete!
 
   // blank (colorless)
@@ -380,6 +393,7 @@ void blankState() {
   // Wait up to 5 seconds
   while (millis() - startTime <   5000) { // its set to 5000 miliseconds (5 seconds) right now, but can be changed if needed!!
     if (digitalRead(buttonMonitorPin) == LOW) {  // LOW = pressed (with INPUT_PULLUP)
+        Serial.println("Button press rate over 0 PPM. Carpal tunnel imminent!");
       buttonPressed = true;
       break;
     }
@@ -400,15 +414,19 @@ void blankState() {
 }
 
 void redState() {
+    Serial.println("Warning! Someone needs help!");
   // emergency protocol - abnormal heart rate detected
   // led turns red, and beeper starts beeping
   // it starts to move, avoiding obstacles, until main button is pressed again. 
   // when main button is pressed again --> call yellowState()
 
     setColor(255, 0, 0); // Red Color
-    int start_time = millis();
-    digitalWrite(motorPin1, HIGH);
-    digitalWrite(motorPin2, HIGH);
+
+    unsigned long start_time = micros();
+    // digitalWrite(in1, HIGH);
+    // digitalWrite(in2, LOW);
+    // digitalWrite(in3, LOW);
+    // digitalWrite(in4, HIGH);
   // add buzzer sound here
   // add movement
 
@@ -416,9 +434,11 @@ void redState() {
     while (digitalRead(buttonControlPin) == HIGH){
     }
     // Button IS pressed → stop motors. Help has been found
-    digitalWrite(motorPin1, LOW);
-    digitalWrite(motorPin2, LOW);
-    int instruction[] = {STRAIGHT, millis() - start_time};
+    // digitalWrite(in1, LOW);
+    // digitalWrite(in2, LOW);
+    // digitalWrite(in3, LOW);
+    // digitalWrite(in4, LOW);
+    unsigned long instruction[] = {LEFT, micros() - start_time};
     queue.Append(instruction);
 
     // STOP BUZZER SOUND
@@ -428,6 +448,7 @@ void redState() {
 }
 
 void yellowState() {
+    Serial.println("Going back to the person in distress");
   // the robot retraces it's steps back to initial location. 
   // When it arrives with help (another button push on main button), back to bluestate --> call blueState()
 
@@ -454,6 +475,7 @@ void setColor(int redValue, int greenValue, int blueValue) {
 }
 
 void changeState() {
+    Serial.println("Welcome to the intersection of bad decisions and poor code written by bad programmers");
     switch (state) {
         case IDLE:
             blueState();
@@ -466,22 +488,43 @@ void changeState() {
     }
 }
 
-void reverse(int instruction[2]) {
+void reverse(long instruction[2]) {
     Serial.println(instruction[0]);
     Serial.println(instruction[1]);
-    switch (instruction[0]){
+    switch (instruction[0]) {
         case STRAIGHT:
             // Code that make go forward
-            Serial.println("Just give me a 'pass' control thingy, please");
+            // digitalWrite(in1, HIGH);
+            // digitalWrite(in2, LOW);
+            // digitalWrite(in3, LOW);
+            // digitalWrite(in4, HIGH);
+            Serial.println("CHARGE!");
+            break;
         case LEFT:
             // Code that goes spinny towards the right
-            Serial.println("Just give me a 'pass' control thingy, please");
+            // digitalWrite(in1, HIGH);
+            // digitalWrite(in2, LOW);
+            // digitalWrite(in3, HIGH);
+            // digitalWrite(in4, LOW);
+            Serial.println("Trans lefts are human lefts.");
+            break;
         case RIGHT:
             // Code that goes spinny towards the left
-            Serial.println("Just give me a 'pass' control thingy, please");
+            // digitalWrite(in1, LOW);
+            // digitalWrite(in2, HIGH);
+            // digitalWrite(in3, LOW);
+            // digitalWrite(in4, HIGH);
+            Serial.println("Skirt goes spinny!");
+            break;
         case BACK:
             // Code thet make go backwards
-            Serial.println("Just give me a 'pass' control thingy, please");
+            // digitalWrite(in1, LOW);
+            // digitalWrite(in2, HIGH);
+            // digitalWrite(in3, HIGH);
+            // digitalWrite(in4, LOW);
+            Serial.println("Rewind!");
+            break;
     }
-    delay(instruction[1]);
+    int ms = instruction[1]/1000;
+    delay(ms);
 }
