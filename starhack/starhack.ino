@@ -28,6 +28,12 @@ int in2 = 5; // Right Back
 int in3 = 7; // Left Back
 int in4 = 8; // Left Forward
 
+// Sound stuff
+const int threshold = 30;
+int soundSensor = A0;
+int buzzer = 6;
+int response = 0;
+
 // Manually making more readable states because enums don't work well
 const int IDLE = 0;
 const int MONITORING = 1;
@@ -332,16 +338,33 @@ void setup() {
 
     pinMode(buttonMonitorPin, INPUT_PULLUP);
     pinMode(buttonControlPin, INPUT_PULLUP);
-    blueState();
+
+    pinMode(soundSensor, INPUT);
+    pinMode(buzzer, OUTPUT);
+
+    state = IDLE;
 }
 
 void loop() {
+    switch (state) {
+    case IDLE:
+        blueState();
+        break;
+    case MONITORING:
+        blankState();
+        break;
+    case EMERGENCY:
+        redState();
+        break;
+    case GUIDING:
+        yellowState();
+        break;
+    }
   // put your main code here, to run repeatedly:
   // While not in panic mode, monitor heart rate and make green LED light up.
   // When abnormal heart rate: go into panic mode (light up red LED) -> Go in straight line until object is detected, beeping. (implement pathfinding to turn and go back if time)
   // When object found: Guiding mode -> lead back to original point.
   // Extra: Add indicator when heart rate is near abnormal threshold, enable voluntary activation -> automatic at certain threshold
-
 }
 
 void blueState() {
@@ -360,8 +383,15 @@ void blueState() {
     // digitalWrite(in2, LOW);
     // digitalWrite(in3, LOW);
     // digitalWrite(in4, HIGH);  // Example: forward direction
-
-    while (digitalRead(buttonControlPin) == HIGH){}
+    state = MONITORING;
+    while (digitalRead(buttonControlPin) == HIGH){
+        // int sensorData = digitalRead(soundSensor);
+        // Serial.println(sensorData);
+        // if (sensorData > threshold){
+        //     state = EMERGENCY;
+        //     break;
+        // }
+    }
 
     Serial.println("Button Pressed!");
 
@@ -369,8 +399,6 @@ void blueState() {
     // digitalWrite(in2, LOW);
     // digitalWrite(in3, LOW);
     // digitalWrite(in4, LOW);
-    state = MONITORING;
-    changeState();
 }
 
 
@@ -395,25 +423,23 @@ void blankState() {
     if (digitalRead(buttonMonitorPin) == LOW) {  // LOW = pressed (with INPUT_PULLUP)
         Serial.println("Button press rate over 0 PPM. Carpal tunnel imminent!");
       buttonPressed = true;
+      state = EMERGENCY;
       break;
     }
   }
-
-  if (buttonPressed) {
-    // Button was pressed within 5 seconds (indicating high heartrate, to )
-    state = EMERGENCY;
+    
 
 
-  } else {
+  if (buttonPressed == false) {
     // Button was NOT pressed within 5 seconds
     setColor(0, 255, 0);
     delay(4000); // Pause before entering blue mode again
     state = IDLE;
   }
-  changeState(); 
 }
 
 void redState() {
+    toggleBuzzer(0);
     Serial.println("Warning! Someone needs help!");
   // emergency protocol - abnormal heart rate detected
   // led turns red, and beeper starts beeping
@@ -442,9 +468,9 @@ void redState() {
     queue.Append(instruction);
 
     // STOP BUZZER SOUND
+    toggleBuzzer(1);
 
     state = GUIDING;
-    changeState();
 }
 
 void yellowState() {
@@ -465,27 +491,12 @@ void yellowState() {
 
   // assume everything is done now
   state = IDLE;
-  changeState();
 }
 
 void setColor(int redValue, int greenValue, int blueValue) {
     analogWrite(redPin, redValue);
     analogWrite(greenPin, greenValue);
     analogWrite(bluePin, blueValue);
-}
-
-void changeState() {
-    Serial.println("Welcome to the intersection of bad decisions and poor code written by bad programmers");
-    switch (state) {
-        case IDLE:
-            blueState();
-        case MONITORING:
-            blankState();
-        case EMERGENCY:
-            redState();
-        case GUIDING:
-            yellowState();
-    }
 }
 
 void reverse(long instruction[2]) {
@@ -527,4 +538,12 @@ void reverse(long instruction[2]) {
     }
     int ms = instruction[1]/1000;
     delay(ms);
+}
+
+void toggleBuzzer(int response) {
+  if(response == 0){
+    digitalWrite(buzzer, HIGH);
+  } else {
+    digitalWrite(buzzer, LOW);
+  }
 }
