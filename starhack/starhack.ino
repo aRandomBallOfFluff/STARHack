@@ -17,8 +17,8 @@ int redPin= 11;
 int greenPin = 10;
 int  bluePin = 9;
 
-int buttonMonitorPin = 12;
-int buttonControlPin = 13;
+int buttonMonitorPin = 13;
+int buttonControlPin = 12;
 
 int trig = 3;
 int echo = 2;
